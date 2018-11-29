@@ -29,7 +29,7 @@ admin.initializeApp({
 });
 
 const OAUTH_REDIRECT_URI =
-  functions.config().oauth.redirect_uri ||
+  functions.config().azure.redirect_uri ||
   `https://${process.env.GCLOUD_PROJECT}.firebaseapp.com/auth.html`;
 const OAUTH_SCOPES = "openid profile email User.Read";
 
