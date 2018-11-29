@@ -13,23 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-'use strict';
+"use strict";
 
-const functions = require('firebase-functions');
-const cookieParser = require('cookie-parser');
-const crypto = require('crypto');
-const jwt = require('jsonwebtoken');
+const functions = require("firebase-functions");
+const cookieParser = require("cookie-parser");
+const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
 
 // Firebase Setup
-const admin = require('firebase-admin');
-const serviceAccount = require('./service-account.json');
+const admin = require("firebase-admin");
+const serviceAccount = require("./service-account.json");
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: `https://${process.env.GCLOUD_PROJECT}.firebaseio.com`,
+  databaseURL: `https://${process.env.GCLOUD_PROJECT}.firebaseio.com`
 });
 
-const OAUTH_REDIRECT_URI = `https://${process.env.GCLOUD_PROJECT}.firebaseapp.com/auth.html`;
-const OAUTH_SCOPES = 'openid profile email User.Read';
+const OAUTH_REDIRECT_URI =
+  functions.config().oauth.redirect_uri ||
+  `https://${process.env.GCLOUD_PROJECT}.firebaseapp.com/auth.html`;
+const OAUTH_SCOPES = "openid profile email User.Read";
 
 /**
  * Creates a configured simple-oauth2 client for Azure.
@@ -45,15 +47,15 @@ function azureOAuth2Client() {
   const credentials = {
     client: {
       id: functions.config().azure.client_id,
-      secret: functions.config().azure.client_secret,
+      secret: functions.config().azure.client_secret
     },
     auth: {
-      tokenHost: 'https://login.microsoftonline.com',
+      tokenHost: "https://login.microsoftonline.com",
       authorizePath: `${tenantId}/oauth2/v2.0/authorize`,
-      tokenPath: `${tenantId}/oauth2/v2.0/token`,
-    },
+      tokenPath: `${tenantId}/oauth2/v2.0/token`
+    }
   };
-  return require('simple-oauth2').create(credentials);
+  return require("simple-oauth2").create(credentials);
 }
 
 /**
@@ -64,19 +66,19 @@ exports.redirect = functions.https.onRequest((req, res) => {
   const oauth2 = azureOAuth2Client();
 
   cookieParser()(req, res, () => {
-    const state = req.cookies.state || crypto.randomBytes(20).toString('hex');
-    console.log('Setting verification state:', state);
-    res.cookie('state', state.toString(), {
+    const state = req.cookies.state || crypto.randomBytes(20).toString("hex");
+    console.log("Setting verification state:", state);
+    res.cookie("state", state.toString(), {
       maxAge: 3600000,
       secure: true,
-      httpOnly: true,
+      httpOnly: true
     });
     const redirectUri = oauth2.authorizationCode.authorizeURL({
       redirect_uri: OAUTH_REDIRECT_URI,
       scope: OAUTH_SCOPES,
-      state: state,
+      state: state
     });
-    console.log('Redirecting to:', redirectUri);
+    console.log("Redirecting to:", redirectUri);
     res.redirect(redirectUri);
   });
 });
@@ -92,28 +94,30 @@ exports.token = functions.https.onRequest(async (req, res) => {
 
   try {
     return cookieParser()(req, res, async () => {
-      console.log('Received verification state:', req.cookies.state);
-      console.log('Received state:', req.query.state);
+      console.log("Received verification state:", req.cookies.state);
+      console.log("Received state:", req.query.state);
       if (!req.cookies.state) {
-        throw new Error('State cookie not set or expired. Maybe you took too long to authorize. Please try again.');
+        throw new Error(
+          "State cookie not set or expired. Maybe you took too long to authorize. Please try again."
+        );
       } else if (req.cookies.state !== req.query.state) {
-        throw new Error('State validation failed');
+        throw new Error("State validation failed");
       }
 
       const auth_code = req.query.code;
-      console.log('Received auth code:', auth_code);
+      console.log("Received auth code:", auth_code);
 
       const result = await oauth2.authorizationCode.getToken({
         code: auth_code,
         redirect_uri: OAUTH_REDIRECT_URI,
-        scope: OAUTH_SCOPES,
+        scope: OAUTH_SCOPES
       });
-      console.log('Auth code exchange result received:', result);
+      console.log("Auth code exchange result received:", result);
 
       // We have an Azure access token and the user identity now.
 
       const token = oauth2.accessToken.create(result);
-      console.log('Token created: ', token.token);
+      console.log("Token created: ", token.token);
 
       const accessToken = token.token.access_token;
       const user = jwt.decode(token.token.id_token);
@@ -122,13 +126,18 @@ exports.token = functions.https.onRequest(async (req, res) => {
       const email = user.email;
 
       // Create a Firebase account and get the Custom Auth Token.
-      const firebaseToken = await createFirebaseAccount(userId, userName, email, accessToken);
+      const firebaseToken = await createFirebaseAccount(
+        userId,
+        userName,
+        email,
+        accessToken
+      );
       // Serve an HTML page that signs the user in and updates the user profile.
-      return res.jsonp({ token: firebaseToken});
+      return res.jsonp({ token: firebaseToken });
     });
-  } catch(error) {
+  } catch (error) {
     return res.jsonp({
-      error: error.toString(),
+      error: error.toString()
     });
   }
 });
@@ -145,23 +154,29 @@ async function createFirebaseAccount(userId, displayName, email, accessToken) {
   const uid = `azure-ad:${userId}`;
 
   // Save the access token to the Firebase Realtime Database.
-  const databaseTask = admin.database().ref(`/azureAccessToken/${uid}`).set(accessToken);
+  const databaseTask = admin
+    .database()
+    .ref(`/azureAccessToken/${uid}`)
+    .set(accessToken);
 
   // Create or update the user account.
-  const userCreationTask = admin.auth().updateUser(uid, {
-    displayName: displayName,
-  }).catch((error) => {
-    // If user does not exists we create it.
-    if (error.code === 'auth/user-not-found') {
-      return admin.auth().createUser({
-        uid: uid,
-        displayName: displayName,
-        email: email,
-        emailVerified: true,
-      });
-    }
-    throw error;
-  });
+  const userCreationTask = admin
+    .auth()
+    .updateUser(uid, {
+      displayName: displayName
+    })
+    .catch(error => {
+      // If user does not exists we create it.
+      if (error.code === "auth/user-not-found") {
+        return admin.auth().createUser({
+          uid: uid,
+          displayName: displayName,
+          email: email,
+          emailVerified: true
+        });
+      }
+      throw error;
+    });
 
   // Wait for all async task to complete then generate and return a custom auth token.
   await Promise.all([userCreationTask, databaseTask]);
