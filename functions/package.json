@@ -3,7 +3,7 @@
   "description": "Authenticate with Azure Firebase Functions sample",
   "dependencies": {
     "cookie-parser": "^1.4.3",
-    "firebase-admin": "~6.2.0",
+    "firebase-admin": "^6.3.0",
     "firebase-functions": "^2.1.0",
     "jsonwebtoken": "^8.4.0",
     "request": "^2.74.0",
