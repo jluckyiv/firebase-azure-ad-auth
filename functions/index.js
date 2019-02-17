@@ -23,15 +23,23 @@ const jwt = require("jsonwebtoken");
 // Firebase Setup
 const admin = require("firebase-admin");
 const serviceAccount = require("./service-account.json");
+
+const databaseURL = `https://${process.env.GCLOUD_PROJECT}.firebaseio.com`;
+const redirectURI = `https://${
+  process.env.GCLOUD_PROJECT
+}.firebaseapp.com/auth.html`;
+const scope = "openid profile email User.Read";
+const tenantId = "common";
+
+const REDIRECT_URI = functions.config().azure.redirect_uri || redirectURI;
+const TENANT_ID = functions.config().azure.tenant_id || tenantId;
+const CLIENT_ID = functions.config().azure.client_id;
+const CLIENT_SECRET = functions.config().azure.client_secret;
+
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: `https://${process.env.GCLOUD_PROJECT}.firebaseio.com`
+  databaseURL: databaseURL
 });
-
-const OAUTH_REDIRECT_URI =
-  functions.config().azure.redirect_uri ||
-  `https://${process.env.GCLOUD_PROJECT}.firebaseapp.com/auth.html`;
-const OAUTH_SCOPES = "openid profile email User.Read";
 
 /**
  * Creates a configured simple-oauth2 client for Azure.
@@ -42,17 +50,16 @@ function azureOAuth2Client() {
   // and `azure.tenant_id`Google Cloud environment variables.
 
   // If there is no tenant_id environmet variable, use the common enpoint.
-  const tenantId = functions.config().azure.tenant_id || "common";
 
   const credentials = {
     client: {
-      id: functions.config().azure.client_id,
-      secret: functions.config().azure.client_secret
+      id: CLIENT_ID,
+      secret: CLIENT_SECRET
     },
     auth: {
       tokenHost: "https://login.microsoftonline.com",
-      authorizePath: `${tenantId}/oauth2/v2.0/authorize`,
-      tokenPath: `${tenantId}/oauth2/v2.0/token`
+      authorizePath: `${TENANT_ID}/oauth2/v2.0/authorize`,
+      tokenPath: `${TENANT_ID}/oauth2/v2.0/token`
     }
   };
   return require("simple-oauth2").create(credentials);
@@ -73,13 +80,13 @@ exports.redirect = functions.https.onRequest((req, res) => {
       secure: true,
       httpOnly: true
     });
-    const redirectUri = oauth2.authorizationCode.authorizeURL({
-      redirect_uri: OAUTH_REDIRECT_URI,
-      scope: OAUTH_SCOPES,
+    const uri = oauth2.authorizationCode.authorizeURL({
+      redirect_uri: REDIRECT_URI,
+      scope: scope,
       state: state
     });
-    console.log("Redirecting to:", redirectUri);
-    res.redirect(redirectUri);
+    console.log("Redirecting to:", uri);
+    res.redirect(uri);
   });
 });
 
@@ -109,8 +116,8 @@ exports.token = functions.https.onRequest(async (req, res) => {
 
       const result = await oauth2.authorizationCode.getToken({
         code: auth_code,
-        redirect_uri: OAUTH_REDIRECT_URI,
-        scope: OAUTH_SCOPES
+        redirect_uri: REDIRECT_URI,
+        scope: scope
       });
       console.log("Auth code exchange result received:", result);
 
