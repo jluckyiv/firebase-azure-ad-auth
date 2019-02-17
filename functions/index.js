@@ -140,7 +140,7 @@ exports.token = functions.https.onRequest(async (req, res) => {
         accessToken
       );
       // Serve an HTML page that signs the user in and updates the user profile.
-      return res.jsonp({ token: firebaseToken });
+      return res.type("text/javascript").jsonp({ token: firebaseToken });
     });
   } catch (error) {
     return res.jsonp({
