@@ -41,6 +41,12 @@ firebase functions:config:set azure.redirect_uri="local or app engine redirect u
 
 ## Run the sample
 
+Before you run the sample, you must copy your Firebase config to local. Make sure that `.runtimeconfig.json` is in your `.gitignore`.
+
+```shell
+firebase functions:config:get > .runtimeconfig.json
+```
+
 Open the sample's website by using `firebase open hosting:site` or directly accessing `https://<project-id>.firebaseapp.com/`.
 
 Click on the **Sign in with Azure AD** button and the page should redirect to the Microsoft auth page. Sign in and/or authorize the authentication request.

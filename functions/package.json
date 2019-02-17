@@ -3,12 +3,12 @@
   "description": "Authenticate with Azure Firebase Functions sample",
   "dependencies": {
     "cookie-parser": "^1.4.3",
-    "firebase-admin": "^6.3.0",
-    "firebase-functions": "^2.1.0",
+    "firebase-admin": "~7.0.0",
+    "firebase-functions": "^2.2.0",
     "jsonwebtoken": "^8.4.0",
     "request": "^2.74.0",
     "request-promise-native": "^1.0.3",
-    "simple-oauth2": "^1.0.0"
+    "simple-oauth2": "^1.0.1"
   },
   "devDependencies": {
     "eslint": "^4.13.1",
