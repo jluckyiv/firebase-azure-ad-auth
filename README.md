@@ -1,5 +1,9 @@
 # Use Azure AD Sign In with Firebase
 
+As of 2020, this repo is obsolete. The Firebase SDK now supports [authenticating using Microsoft](https://firebase.google.com/docs/auth/web/microsoft-oauth). I left the old README below. The Firebase docs explain [setting up Firebase and Azure AD](https://firebase.google.com/docs/auth/web/microsoft-oauth#before_you_begin), [handling the sign-in](https://firebase.google.com/docs/auth/web/microsoft-oauth#handle_the_sign-in_flow_with_the_firebase_sdk), [existing account errors](https://firebase.google.com/docs/auth/web/microsoft-oauth#handling-account-exists-with-different-credential-errors), [other advanced topics](https://firebase.google.com/docs/auth/web/microsoft-oauth#advanced:-handle-the-sign-in-flow-manually), [authenticating in a Chrome extension](https://firebase.google.com/docs/auth/web/microsoft-oauth#authenticate_with_firebase_in_a_chrome_extension) and [customizing a redirect domain](https://firebase.google.com/docs/auth/web/microsoft-oauth#customizing-the-redirect-domain-for-microsoft-sign-in).
+
+## Old README
+
 This sample shows how to authenticate Firebase apps using Azure AD Sign-In. It's copied from from [Firebase's function-samples repo](https://github.com/firebase/functions-samples/tree/master), specifically the [instagram-auth](https://github.com/firebase/functions-samples/tree/master/instagram-auth) sample. This model uses redirect instead of popup to be a little more mobile-friendly.
 
 In this sample we use OAuth 2.0 based authentication to get Azure AD user information then create a Firebase Custom Token (using the `oid` from the Azure AD `id_token`).
